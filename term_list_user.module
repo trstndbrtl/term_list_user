@@ -1,0 +1,361 @@
+<?php
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\desktop_user\TabPageFonction;
+use Drupal\Core\Database\Database;
+use Drupal\views\ViewExecutable;
+
+
+/**
+ * Implements hook_ENTITY_TYPE_insert()
+ *
+ * @param EntityInterface $entity
+ */
+function term_list_user_node_insert(EntityInterface $entity) {
+  $entity->save();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update()
+ *
+ * @param EntityInterface $entity
+ */
+function term_list_user_node_update(EntityInterface $entity) {
+  // get the language of node
+  $langcode = $entity->language()->getId();
+  // get owner id of node
+  $owners = $entity->getOwnerId();
+  // get node id
+  $nid = $entity->id();
+  // If node revue
+  if ($entity->bundle() == 'revue') {
+    /**
+     * if revue thematique taxonomy
+     */
+    if (!$entity->get('field_revue_thematique')->isEmpty()) {
+      // Take vocabulary id
+      $vid = 'th_matiques';
+      // Get original term form
+      $originalTerm = $entity->original->get('field_revue_thematique')->getValue();
+      // get new term form
+      $newTerm = $entity->get('field_revue_thematique')->getValue();
+      // Process function
+      original_to_new_transaction($originalTerm, $newTerm, $nid, $owners, $langcode, $vid);
+    }
+    /**
+     * if revue figure taxonomy
+     */
+    if (!$entity->get('field_authors_books')->isEmpty()) {
+      // Take vocabulary id
+      $vid = 'figures';
+      // Get original term form
+      $originalTerm = $entity->original->get('field_authors_books')->getValue();
+      // get new term form
+      $newTerm = $entity->get('field_authors_books')->getValue();
+      // Process function
+      original_to_new_transaction($originalTerm, $newTerm, $nid, $owners, $langcode, $vid);
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete()
+ *
+ * @param EntityInterface $entity
+ */
+function term_list_user_node_predelete(EntityInterface $entity) {
+  // get the language of node
+  $langcode = $entity->language()->getId();
+  // get owner id of node
+  $owners = $entity->getOwnerId();
+  // get node id
+  $nid = $entity->id();
+  // If node revue
+  if ($entity->bundle() == 'revue') {
+    /**
+     * if revue thematique taxonomy
+     */
+    if (!$entity->get('field_revue_thematique')->isEmpty()) {
+      // get the field thematique
+      $newTerm = $entity->get('field_revue_thematique')->getValue();
+      // If field thematique is not empty, process it
+      if ($newTerm) {
+        // Delete each items
+        foreach ($newTerm as $key => $tid) {
+          list_removed_tag($owners, $tid, $nid, $langcode);
+          set_count_tag_set($owners, $tid, $langcode);
+        }
+      }
+    }
+    /**
+     * if revue figure taxonomy
+     */
+    if (!$entity->get('field_authors_books')->isEmpty()) {
+      // get the field thematique
+      $newTerm = $entity->get('field_authors_books')->getValue();
+      // If field thematique is not empty, process it
+      if ($newTerm) {
+        // Delete each items
+        foreach ($newTerm as $key => $tid) {
+          list_removed_tag($owners, $tid, $nid, $langcode);
+          set_count_tag_set($owners, $tid, $langcode);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete()
+ *
+ * @param EntityInterface $entity
+ */
+function term_list_user_node_translation_delete(EntityInterface $entity) {
+  // get the language of node
+  $langcode = $entity->language()->getId();
+  // get owner id of node
+  $owners = $entity->getOwnerId();
+  // get node id
+  $nid = $entity->id();
+  // If node revue
+  if ($entity->bundle() == 'revue') {
+    /**
+     * if revue thematique taxonomy
+     */
+    if (!$entity->get('field_revue_thematique')->isEmpty()) {
+      // get the field thematique
+      $newTerm = $entity->get('field_revue_thematique')->getValue();
+      // If field thematique is not empty, process it
+      if ($newTerm) {
+        // Delete each items
+        foreach ($newTerm as $key => $tid) {
+          list_removed_tag($owners, $tid, $nid, $langcode);
+          set_count_tag_set($owners, $tid, $langcode);
+        }
+      }
+    }
+    /**
+     * if revue figure taxonomy
+     */
+    if (!$entity->get('field_authors_books')->isEmpty()) {
+      // get the field thematique
+      $newTerm = $entity->get('field_authors_books')->getValue();
+      // If field thematique is not empty, process it
+      if ($newTerm) {
+        // Delete each items
+        foreach ($newTerm as $key => $tid) {
+          list_removed_tag($owners, $tid, $nid, $langcode);
+          set_count_tag_set($owners, $tid, $langcode);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * original_to_new_transaction() function
+ *
+ * @param int $original
+ *    the original term in node
+ * @param int $new
+ *    the new term set in node
+ * @param string $owner
+ *    the owner of the node
+ * @param string $langcode
+ *    the language of the current node
+ * @param string $vid
+ *    the vocabulary of the term
+ */
+function original_to_new_transaction($original = null, $new = null, $nid = null, $owners = null, $langcode = null, $vid = null) {
+  // Do nothing if variable ORIGINAL and NEW is null
+  if ($original && $new) {
+    // Do nothing if others variables is null
+    if ($nid && $owners && $langcode && $vid && $nid) {
+      // Build ORIGINAL better array
+      foreach ($original as $keyo) { $originalA[] = (int)$keyo['target_id']; }
+      // Build NEW better array
+      foreach ($new as $keyn) { $newA[] = (int)$keyn['target_id']; }
+      // Make copy array for count process factory to finaly stuff
+      $copyO = $originalA;
+      $copyN = $newA;
+      // ORIGINAL Element to remove
+      $originalDiff = array_diff($originalA, $newA);
+      // Remove ORIGINAL Element
+      foreach ($originalDiff as $key => $value) {
+        list_removed_tag($owners, $value, $nid, $langcode);
+      }
+      // Add NEW Element
+      foreach ($newA as $key => $value) {
+        list_tagged_node($owners, $value, $nid, $langcode, $vid);
+      }
+      // Process count factory
+      // Merge cloned array
+      $merge = array_merge($copyO, $copyN);
+      // Filter unique items
+      $unique = array_unique($merge);
+      // Process items
+      foreach ($unique as $u) {
+        set_count_tag_set($owners, $u, $langcode);
+      }
+    }
+  }
+}
+
+/**
+ * list_tagged_node() function
+ * This function set information in table database
+ *
+ * @param int $owners
+ *    the id of the owner node
+ * @param int $tid
+ *    the term id
+ * @param string $nid
+ *    the node id
+ * @param string $langcode
+ *    the language of the current node
+ */
+function list_tagged_node($owners = null, $tid = null, $nid = null, $langcode = null, $vid = null) {
+  if ($owners && $tid && $nid && $langcode && $vid) {
+    $conTagged = Database::getConnection();
+    $queryTagged = $conTagged->merge('user__list_tagged_node')
+      ->key(array('uid' => $owners, 'nid' => $nid, 'tid' => $tid, 'langcode' => $langcode))
+      ->insertFields(array(
+        'uid' => $owners,
+        'tid' => $tid,
+        'nid' => $nid,
+        'langcode' => $langcode,
+      ))
+      ->updateFields(array(
+        'uid' => $owners,
+        'nid' => $nid,
+        'tid' => $tid,
+        'langcode' => $langcode,
+      ));
+    $queryTagged->execute();
+
+    $conUsed = Database::getConnection();
+    $queryUsed = $conUsed->merge('user__list_used_term')
+      ->key(array('uid' => $owners, 'vid' => $vid, 'tid' => $tid, 'langcode' => $langcode))
+      ->insertFields(array(
+        'uid' => $owners,
+        'tid' => $tid,
+        'vid' => $vid,
+        'langcode' => $langcode,
+      ))
+      ->updateFields(array(
+        'uid' => $owners,
+        'vid' => $vid,
+        'tid' => $tid,
+        'langcode' => $langcode,
+      ));
+    $queryUsed->execute();
+
+    // set_count_tag_set($owners, $tid, $langcode);
+  }
+}
+
+/**
+ * list_removed_tag() function
+ * This funtion remove row in user__list_tagged_node
+ *
+ * @param int $owners
+ *    the id of the owner node
+ * @param int $tid
+ *    the term id
+ * @param string $nid
+ *    the node id
+ * @param string $langcode
+ *    the language of the current node
+ */
+function list_removed_tag($owners = null, $tid = null, $nid = null, $langcode = null) {
+  // Do nothing if variable null
+  if ($owners && $tid && $langcode) {
+    // Remove select row
+    $query = \Drupal::database()->delete('user__list_tagged_node');
+    $query->condition('uid', $owners);
+    $query->condition('nid', $nid);
+    $query->condition('tid', $tid);
+    $query->condition('langcode', $langcode);
+    $query->execute();
+  }
+}
+
+/**
+ * set_count_tag_set() function
+ * This funtion set the number of term used by user
+ *
+ * @param int $owners
+ *    the id of the owner node
+ * @param int $tid
+ *    the term id
+ * @param string $langcode
+ *    the language of the current node
+ */
+function set_count_tag_set($owners = null, $tid = null, $langcode = null) {
+  // Do nothing if variable null
+  if ($owners && $tid && $langcode) {
+    // prepare count used term
+    $con = Database::getConnection();
+    $query = $con->select('user__list_tagged_node', 'ut')
+      ->fields('ut', ['tid'])
+      ->condition('tid', $tid)
+      ->condition('uid', $owners)
+      ->condition('langcode', $langcode);
+    $result = $query->execute()->fetchAll();
+    // Check if result is not null
+    if ($result) {
+      // Count result items
+      $countItems = count($result);
+      // Check if count is not null
+      if ($countItems) {
+        $con = Database::getConnection();
+        // Set number items used
+        $query = $con->merge('user__list_used_term')
+          ->key(array('uid' => $owners, 'tid' => $tid, 'langcode' => $langcode))
+          ->updateFields(array(
+            'count' => $countItems,
+          ));
+        $query->execute();
+      }
+    }else{
+      // If not result delete not used term row
+      list_removed_used($owners, $tid, $langcode);
+    }
+  }
+}
+
+/**
+ * list_removed_used() function
+ * This funtion remove row in user__list_tagged_node if count term removed
+ * arrived to 0.
+ *
+ * @param int $owners
+ *    the id of the owner node
+ * @param int $tid
+ *    the term id
+ * @param string $langcode
+ *    the language of the current node
+ */
+function list_removed_used($owners = null, $tid = null, $langcode = null) {
+  // Do nothing if variable null
+  if ($owners && $tid && $langcode) {
+    // Remove select row
+    $query = \Drupal::database()->delete('user__list_used_term');
+    $query->condition('uid', $owners);
+    $query->condition('tid', $tid);
+    $query->condition('langcode', $langcode);
+    $query->execute();
+  }
+}
+
+/**
+* Implements hook_theme().
+*/
+function term_list_user_theme($existing, $type, $theme, $path) {
+  return [
+    'term_user_page' => [
+      'variables' => ['iname' => NULL, 'iuid' => NULL, 'itype'=> null, 'itid'=> null, 'itname' => NULL],
+    ],
+  ];
+}

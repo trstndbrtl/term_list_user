@@ -1,0 +1,119 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Term List user module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function term_list_user_uninstall() {
+  // Clear book data out of the cache.
+  \Drupal::cache('data')->deleteAll();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function term_list_user_schema() {
+
+  $schema['user__list_used_term'] = [
+    'description' => 'Stores all term used by user',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => "the id",
+      ],
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "The user id",
+      ],
+      'vid' => [
+        'description' => 'The vocabulary id',
+        'type' => 'varchar_ascii',
+        'length' => 40,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'tid' => [
+        'description' => 'The term id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'count' => [
+        'description' => 'The count used',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => 0,
+      ],
+      'langcode' => [
+        'description' => 'The language of the node',
+        'type' => 'varchar_ascii',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => 'fr',
+      ],
+    ],
+    'primary key' => ['id', 'tid'],
+    'indexes' => [
+      'uid_tid' => ['uid', 'tid'],
+      'vid_tid' => ['vid', 'tid'],
+    ],
+  ];
+
+  $schema['user__list_tagged_node'] = [
+    'description' => 'Stores all term used by user',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => "the id",
+      ],
+      'uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "The user id",
+      ],
+      'nid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "The node id",
+      ],
+      'tid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The term id.',
+      ],
+      'langcode' => [
+        'description' => 'The language of the node',
+        'type' => 'varchar_ascii',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => 'fr',
+      ],
+    ],
+    'primary key' => ['id', 'tid'],
+    'indexes' => [
+      'nid_tid' => ['nid', 'tid'],
+      'uid_tid' => ['uid', 'tid'],
+    ],
+  ];
+
+  return $schema;
+}

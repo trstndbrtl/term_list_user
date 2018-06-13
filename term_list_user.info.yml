@@ -1,0 +1,5 @@
+name: 'Term List User'
+type: module
+description: 'Show revue article by term and by user'
+core: 8.x
+package: 'MM'

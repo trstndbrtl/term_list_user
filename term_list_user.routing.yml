@@ -1,0 +1,6 @@
+term_list_user.page:
+  path: '/u/{iname}/{iuid}/{itype}/{itid}/{itname}'
+  defaults:
+    _controller: '\Drupal\term_list_user\Controller\UserTermPageController::page'
+  requirements:
+    _permission: 'access content'

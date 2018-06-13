@@ -1,0 +1,23 @@
+{{ iname }}
+{{ iuid }}
+{{ itype }}
+{{ itid }}
+{{ itname }}
+
+<div {{ attributes }}>
+    {{ title_prefix }}
+    <div class="row">
+        <div class="col-12">
+            {{ data }}
+        </div>
+        <div class="col-md-7">
+            {# {{ drupal_view('database_user','revue', owner) }} #}
+        </div>
+        <div class="col-md-5">
+            {{ drupal_view('database_user','revue_video', iuid) }}
+            {{ drupal_view('user_terms','default', iuid) }}
+            {{ drupal_view('database_user','embed_2', iuid) }}
+        </div>
+    </div>
+    {{ title_suffix }}
+</div>
